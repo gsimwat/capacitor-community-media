@@ -395,7 +395,7 @@ public class MediaPlugin extends Plugin {
 
     private static long copyStream(InputStream source, OutputStream target) throws IOException {
         long nread = 0L;
-        byte[] buf = new byte[64*1024];
+        byte[] buf = new byte[512*1024];
         int n;
         while ((n = source.read(buf)) > 0) {
             target.write(buf, 0, n);
