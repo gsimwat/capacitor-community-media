@@ -30,6 +30,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
@@ -307,14 +308,21 @@ public class MediaPlugin extends Plugin {
                 }
 
                 // Save to temp file
+                OutputStream os = null;
+                InputStream is = null;
                 try {
                     inputFile = File.createTempFile("tmp", "." + extension, getContext().getCacheDir());
-                    OutputStream os = new FileOutputStream(inputFile);
-                    os.write(response.body().bytes());
-                    os.close();
+                    os = new FileOutputStream(inputFile);
+                    // OOM when file to download is too big.
+                    // os.write(response.body().bytes());
+                    is = response.body().byteStream();
+                    copyStream(is, os);
                 } catch (IOException e) {
                     call.reject("Saving download to device failed.", EC_FS_ERROR);
                     return;
+                } finally {
+                    if (os != null) os.close();
+                    if (is != null) is.close();
                 }
             } catch (IOException e) {
                 call.reject("Download failed", EC_DOWNLOAD_ERROR);
@@ -383,6 +391,19 @@ public class MediaPlugin extends Plugin {
             call.reject("Album already exists", EC_FS_ERROR);
         }
     }
+
+
+    private static long copyStream(InputStream source, OutputStream target) throws IOException {
+        long nread = 0L;
+        byte[] buf = new byte[64*1024];
+        int n;
+        while ((n = source.read(buf)) > 0) {
+            target.write(buf, 0, n);
+            nread += n;
+        }
+        return nread;
+    }
+
 
     private File copyFile(File inputFile, File albumDir, String fileName) {
         // if destination folder does not exist, create it
