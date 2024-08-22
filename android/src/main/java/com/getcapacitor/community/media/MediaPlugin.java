@@ -318,14 +318,14 @@ public class MediaPlugin extends Plugin {
                     is = response.body().byteStream();
                     copyStream(is, os);
                 } catch (IOException e) {
-                    call.reject("Saving download to device failed.", EC_FS_ERROR);
+                    call.reject("Saving download to device failed: " + e.getMessage(), EC_FS_ERROR);
                     return;
                 } finally {
                     if (os != null) os.close();
                     if (is != null) is.close();
                 }
             } catch (IOException e) {
-                call.reject("Download failed", EC_DOWNLOAD_ERROR);
+                call.reject("Download failed: " + e.getMessage(), EC_DOWNLOAD_ERROR);
                 return;
             }
         } else {
